@@ -12,5 +12,6 @@ namespace MvcJqGrid
         public bool Delete { get; set; }
         public bool Search { get; set; }
         public bool Refresh { get; set; }
+        
     }
 }

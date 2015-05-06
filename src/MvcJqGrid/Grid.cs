@@ -98,9 +98,11 @@ namespace MvcJqGrid
         private int? _treeGridRootLevel;
         private TreeGridModel _treeGridModel;
         private bool? _asyncLoad;
-        private bool _stringResult = true;        
+        private bool _stringResult = true;
         private bool? _ignoreCase;
         private string _rowAttr;
+        private NavGridButtons _navGridButtons;
+        private string _editUrl;
 
         /// <summary>
         ///     Constructor
@@ -639,7 +641,7 @@ namespace MvcJqGrid
             {
                 _scrollInt = 1;
             }
-            else if (!virtualScroll) 
+            else if (!virtualScroll)
             {
                 _scroll = false;
             }
@@ -1167,6 +1169,22 @@ namespace MvcJqGrid
             _jsonReader = jsonReader;
             return this;
         }
+        /// <summary>
+        /// Set the Navigator Buttons 
+        /// </summary>
+        /// <param name="buttons"></param>
+        /// <returns></returns>
+        public Grid SetNavGridButtons(NavGridButtons buttons)
+        {
+            _navGridButtons = buttons;
+            return this;
+        }
+
+        public Grid SetEditUrl(string editUrl)
+        {
+            _editUrl = editUrl;
+            return this;
+        }
 
         public Grid EnableTreeGrid(TreeGridModel treeGridModel = TreeGridModel.Adjacency, int rootLevel = 0)
         {
@@ -1190,7 +1208,7 @@ namespace MvcJqGrid
             var script = new StringBuilder();
 
             // Start script
-            if(_asyncLoad.HasValue && _asyncLoad.Value)
+            if (_asyncLoad.HasValue && _asyncLoad.Value)
                 script.AppendLine("jQuery(window).ready(function () {");
             else
                 script.AppendLine("jQuery(document).ready(function () {");
@@ -1358,7 +1376,7 @@ namespace MvcJqGrid
             {
                 script.AppendFormat("scroll:{0},", _scroll.ToString().ToLower()).AppendLine();
             }
-            
+
             // ScrollOffset
             if (_scrollOffset.HasValue) script.AppendFormat("scrollOffset:{0},", _scrollOffset).AppendLine();
 
@@ -1583,11 +1601,22 @@ namespace MvcJqGrid
             // End jqGrid call
             script.AppendLine("});");
 
+            //Set Edit Url
+            if (!_editUrl.IsNullOrWhiteSpace())
+                script.AppendFormat("editUrl: '{0}',", _editUrl).AppendLine();
+
+
             if (_searchToolbar == true && !_pager.IsNullOrWhiteSpace() &&
                 (_searchClearButton.HasValue && _searchClearButton == true || _searchToggleButton.HasValue && _searchToggleButton == true))
             {
-                script.AppendLine("jQuery('#" + _id + "').jqGrid('navGrid',\"#" + _pager +
-                                                 "\",{edit:false,add:false,del:false,search:false,refresh:false}); ");
+                script.Append("jQuery('#" + _id + "').jqGrid('navGrid',\"#" + _pager + "\",{");
+                if (_navGridButtons.Edit) script.Append("edit: true"); else script.Append("edit: false");
+                if (_navGridButtons.Add) script.Append(",add: true"); else script.Append(",add: false");
+                if (_navGridButtons.Delete) script.Append(",del: true"); else script.Append(",del: false");
+                script.Append(",search: true"); 
+                if (_navGridButtons.Refresh) script.Append(",refresh: true "); else script.Append(",refresh: false");
+
+                script.AppendLine("});");
             }
 
             // Search clear button
@@ -1613,6 +1642,18 @@ namespace MvcJqGrid
                 script.AppendLine("});");
             }
 
+            if (_navGridButtons != null && !_pager.IsNullOrWhiteSpace() &&
+                (!script.ToString().Contains("'navGrid'")))
+            {
+                script.Append("jQuery('#" + _id + "').jqGrid('navGrid',\"#" + _pager + "\",{");
+                if (_navGridButtons.Edit) script.Append("edit: true"); else script.Append("edit: false");
+                if (_navGridButtons.Add) script.Append(",add: true"); else script.Append(",add: false");
+                if (_navGridButtons.Delete) script.Append(",del: true"); else script.Append(",del: false");
+                if (_navGridButtons.Search) script.Append(",search: true"); else script.Append(",search: false");
+                if (_navGridButtons.Refresh) script.Append(",refresh: true "); else script.Append(",refresh: false");
+
+                script.AppendLine("});");
+            }
 
 
             // End script
